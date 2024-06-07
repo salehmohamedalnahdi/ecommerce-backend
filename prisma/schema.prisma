@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Blog {
+  id    Int     @id @default(autoincrement())
+  title  String
+  content String  
+  createdAt  DateTime @default(now())
+}
+ //tasks
+model Tasks {
+  id    Int     @id @default(autoincrement())
+  title  String
+  isDone Boolean  @default(false)
+}
+//jobReasearch
+model Job {
+  id        Int     @id @default(autoincrement())
+  title     String
+  content   String  
+  city      String
+  cat       String
+  createdAt DateTime @default(now())
+  applyers Applyer [] 
+}
+
+model Applyer {
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique 
+  createdAt  DateTime   @default(now())
+  applyer    Job        @relation(fields: [appler_id],references: [id],onDelete: Cascade)
+  appler_id  Int
+  cv         String ?
+}
+
+//ecomrce
+model Product {
+  id            Int     @id @default(autoincrement())
+  name          String
+  desc          String?  
+  price         Float
+  cat           String
+  image         String?
+  createdAt     DateTime @default(now())
+  interactions  Interaction[]
+  carts         Cart[]
+    
+}
+
+model Interaction {
+  id               String     @id @default(uuid())
+  comment          String
+  rate             Int  
+  createdAt        DateTime   @default(now())
+  products         Product    @relation(fields: [interactionId],references: [id],onDelete: Cascade)
+  interactionId    Int
+}
+
+model Cart {
+  id           Int         @id @default(autoincrement())
+  products     Product[]
+ 
+}
