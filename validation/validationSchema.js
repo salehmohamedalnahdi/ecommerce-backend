@@ -20,4 +20,11 @@ const createInteraction=(requestBody)=>{
     });
     return schema.validate(requestBody)
 }
-module.exports={createProduct,createInteraction}
+
+const updateProCart=(requestBody)=>{
+  const schema = Joi.object({
+      qu: Joi.number().min(1).required(),
+    });
+    return schema.validate(requestBody)
+}
+module.exports={createProduct,createInteraction,updateProCart}

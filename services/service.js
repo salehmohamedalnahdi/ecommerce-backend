@@ -2,7 +2,11 @@ const {PrismaClient}=require ('@prisma/client');
 const prisma=new PrismaClient();
 
 async function getProduct() {
-  const product = await prisma.product.findMany()
+  const product = await prisma.product.findMany({
+    orderBy: {
+      createdAt: 'desc' // or 'asc' for descending order
+    }
+  })
     return product;  
 }
 
@@ -10,19 +14,28 @@ async function productDetails(productId) {
   const product = await prisma.product.findMany({
     where: {id: parseInt(productId)},
     include: {
-      interactions: true
+      interactions: {
+        orderBy: {
+          createdAt: 'desc' 
+        }
+      }
     }
   })
   return product;  
 }
 
-async function filterProduct(cat) {
+async function filterProduct(filter) {
   const product = await prisma.product.findMany({
     where: {
-      cat:  {
+      /*cat:  {
               contains: cat,
               mode: 'insensitive'
-            }
+            }*/
+              OR: [
+                { cat: { contains: filter, mode: 'insensitive' } },
+                { name: { contains: filter, mode: 'insensitive' } },
+                { desc: { contains: filter, mode: 'insensitive' } }
+              ]
     },
     include: {
       interactions: true
@@ -73,10 +86,72 @@ async function updateProduct(requestBody,productId) {
   return product;
 }
 
+//proCart
+async function getProCart() {
+  const proCart = await prisma.pro_cart.findMany({
+    where: {cartId: 3 },
+    include: { products: true },
+  })
+    return proCart;  
+}
+
+async function addProCart(productId){
+ // const productIndex =await prisma.pro_cart.products.findIndex((product) => product.id === productId)
+  const cartId= 3 
+  const proCart = await prisma.pro_cart.findFirst({
+    where: {
+      cartId: parseInt(cartId),
+      //products: { id: parseInt(productId) } ,
+      products: {some: { id: parseInt(productId) }}
+      
+    },
+  });
+
+  if (proCart) {
+    // Product already exists in the cart
+    console.log('Product already exists in the cart');
+    return {Error: "Product already exists in the cart"} ;
+  }
+
+  const newProCart = await prisma.pro_cart.create({
+    data: {
+      products: { connect: { id: parseInt(productId) } },
+      carts: { connect: { id: parseInt(cartId) } }
+    },
+  });
+ return(newProCart);
+}
+
+async function deleteProCart(proCartId){
+  const proCart=await prisma.pro_cart.delete({
+    where: { id: parseInt(proCartId) },
+  });
+ return proCart;
+}
+
+async function checkProCart(proCartId) {
+  const checkProCart=await prisma.pro_cart.findUnique({
+    where: { id: parseInt(proCartId) }
+  })
+  return checkProCart;
+}
+
+async function updateProCart(requestBody,proCartId) {
+  const product= await prisma.pro_cart.updateMany({
+    where: { id: parseInt(proCartId)},
+    data:{
+      qu:requestBody.qu,
+    }
+  })
+  return product;
+}
+
+
 //cart
 async function getCart() {
   const cart = await prisma.cart.findMany({
-    include: { products: true },
+   // where : {pro_carts: {some : {id: 2}}},
+    include: { pro_carts: true },
   })
     return cart;  
 }
@@ -86,25 +161,13 @@ async function addCart(){
   return(newCart);
 }
 
-async function addToCart(productId) {
-  const addToCart = await prisma.cart.update({
-    where: { id:2 },
-    data: {
-      products: {
-        connect: { id: parseInt(productId) },
-      },
-    },
-    include: { products: true },
-  });
-  return addToCart;
-}
-
 async function checkCart(cartId) {
   const checkCart=await prisma.cart.findUnique({
     where: { id: parseInt(cartId) }
   })
   return checkCart;
 }
+
 
 //interaction
 async function addInteraction(requestBody,productId){ 
@@ -141,9 +204,13 @@ module.exports = {
   Check,
   deleteProduct,
   updateProduct,
+  getProCart,
+  addProCart,
+  deleteProCart,
+  checkProCart,
+  updateProCart,
   getCart,
   addCart,
-  addToCart,
   checkCart,
   addInteraction,
   deleteInteraction,
@@ -151,74 +218,3 @@ module.exports = {
 };
 
 
-
-/* async function getUsersWithAchievements(userId) {
-  try {
-    const users = await prisma.user.findMany({
-      where: { id: userId },
-      include: { achievements: true }
-    });
-    return users;
-  } catch (error) {
-    console.error('Error displaying portfolio:', error);
-    throw new Error('Failed to display portfolio.');
-  }
-}*/
-
-/*async function deletePortfolio(req,res) {
- try {
-  const {email}=req.body
-  try {
-    const checkUser=await prisma.user.findMany({
-      where: { email: email }
-    })
-  } catch (error) {
-    console.error('Error in checkUser controller:', error);
-     res.json({ error: 'email is not exsisted' });
-  }
-  const deleteaAhievement=await prisma.achievement.deleteMany({
-    where: { userEmail: email }
-   });
-  const deleteUser=await prisma.user.delete({ 
-    where: { email: email }
-  });
-  res.json(deleteUser)
-}
-  catch (error) {
-  console.error('Error in user controller:', error);
-    res.json({ error: 'Failed to delete portfolio.' });
- }
-}*/
-
-/*async function updatePortfolio(req,res) {
-  try {
-   const {name, email, age ,title,content}=req.body
-   try {
-    const checkUser=await prisma.user.findMany({
-      where: { email: email }
-     })
-   } catch (error) {
-    console.error('Error in checkUser controller:', error);
-    res.json({ error: 'email is not exsisted' });
-   }
-   const updateUser=await prisma.user.updateMany({
-    where: { email: email },
-    data:{
-      name,
-      age,
-    },
-  });
-  const updateachievement=await prisma.achievement.updateMany({
-   where: { userEmail: email },
-   data:{
-     title,
-     content,
-   }
- })
- res.json({message:"updateed is done"})
-}
-  catch (error) {
-  console.error('Error in user controller:', error);
-    res.status(500).json({ error: 'Failed to Update portfolio.' });
- }
-}*/

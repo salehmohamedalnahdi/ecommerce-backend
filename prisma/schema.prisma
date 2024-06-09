@@ -48,16 +48,15 @@ model Applyer {
 
 //ecomrce
 model Product {
-  id            Int     @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   name          String
   desc          String?  
   price         Float
   cat           String
   image         String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime      @default(now())
   interactions  Interaction[]
-  carts         Cart[]
-    
+  pro_carts     Pro_cart[]     @relation("product")
 }
 
 model Interaction {
@@ -68,9 +67,15 @@ model Interaction {
   products         Product    @relation(fields: [interactionId],references: [id],onDelete: Cascade)
   interactionId    Int
 }
-
+model Pro_cart {
+  id           Int          @id @default(autoincrement())
+  qu           Int          @default(1)
+  products     Product[]    @relation("product")
+  carts         Cart?       @relation("cart",fields: [cartId],references: [id],onDelete: Cascade)
+  cartId        Int?
+}
 model Cart {
   id           Int         @id @default(autoincrement())
-  products     Product[]
+  pro_carts     Pro_cart[] @relation("cart")
  
 }

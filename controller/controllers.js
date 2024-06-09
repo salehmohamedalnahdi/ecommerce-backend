@@ -31,9 +31,9 @@ async function productDetails(req,res) {
 
 
 async function filterProduct(req, res) {
-  cat=req.params.cat
+  filter=req.params.filter
   try {
-    const product = await service.filterProduct(cat);
+    const product = await service.filterProduct(filter);
     res.json(product);
   } catch (error) {
     console.error('Error in controller:', error);
@@ -94,6 +94,72 @@ async function updateProduct(req,res) {
   }
  }
 
+//proCart
+async function showProCart(req, res) {
+  try {
+    const proCart = await service.getProCart();
+    res.json(proCart);
+  } catch (error) {
+    console.error('Error in controller:', error);
+    res.status(500).json({ error: 'Failed to display proCart.' });
+  }
+}
+
+async function addProCart(req,res) {
+  try {
+   const productId=req.params.productId
+   const checkProduct= await service.Check(productId)
+   if(!checkProduct){
+     return res.json({ error: 'Product is not exsisted' });
+    }
+   const add= await service.addProCart(productId)
+   console.log("Added Product successfully")
+   res.json(add)
+ }
+   catch (error) {
+   console.error('Error in controller:', error);
+  res.json({ error: 'Failed to Added to Cart.' });
+  }
+ }
+
+ async function deleteProCart(req,res) {
+  try {
+   const proCartId=req.params.proCartId
+   const checkProCart= await service.checkProCart(proCartId)
+  if(!checkProCart){
+    return res.json({ error: 'ProCart is not exsisted' });
+  }
+  const deleteProCart=await service.deleteProCart(proCartId)
+   res.json(deleteProCart)
+ }
+   catch (error) {
+   console.error('Error in controller:', error);
+     res.json({ error: 'Failed to delete ProCart.' });
+  }
+ }
+
+ async function updateProCart(req,res) {
+
+  const { error, value } =schema.updateProCart(req.body);
+  if (error){
+    return res.status(400).json({ error: error.details[0].message })
+  }
+  try {
+   const proCartId=req.params.proCartId
+   const checkProCart= await service.checkProCart(proCartId)
+   if(!checkProCart){
+     return res.json({ error: 'item is not exsisted' });
+    }
+   await service.updateProCart(value,proCartId)
+   console.log("updateed is done")
+   res.json("updateed is done")
+ }
+   catch (error) {
+   console.error('Error in controller:', error);
+     res.json({ error: 'Failed to Update item.' });
+  }
+ }
+
 
  //cart
  async function showCart(req, res) {
@@ -116,23 +182,6 @@ async function createCart(req,res){
   }
 }
 
-async function addToCart(req,res) {
-  try {
-   const productId=req.params.productId
-   const checkProduct= await service.Check(productId)
-   if(!checkProduct){
-     return res.json({ error: 'Product is not exsisted' });
-    }
-   await service.addToCart(productId)
-   console.log("updateed is done")
-   res.json("updateed is done")
- }
-   catch (error) {
-   console.error('Error in controller:', error);
-  res.json({ error: 'Failed to Update Addto Cart.' });
-  }
- }
-
 //interaction
 async function createInteraction(req,res) {
 
@@ -144,7 +193,7 @@ async function createInteraction(req,res) {
    const productId=req.params.productId
    const checkProduct= await service.Check(productId)
    if(!checkProduct){
-     return res.json({ error: 'Product is not exsisted' });
+     return res.json({ error: 'interaction is not exsisted' });
     }
    const interaction= await service.addInteraction(value,productId)
    res.json(interaction)
@@ -178,9 +227,12 @@ module.exports = {
   createProduct,
   deleteProduct,
   updateProduct,
+  showProCart,
+  addProCart,
+  deleteProCart,
+  updateProCart,
   showCart,
   createCart,
-  addToCart,
   createInteraction,
   deleteInteraction,
 };
